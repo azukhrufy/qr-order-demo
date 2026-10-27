@@ -70,3 +70,14 @@ dan integrasi POS. Data hilang saat server restart — ini demo alur, bukan prod
 
 Edit `lib/menu.js`: nama resto, nomor meja, kategori, dan daftar item. Tidak perlu menyentuh
 kode lain.
+
+## Prop QR untuk demo di lokasi
+
+```bash
+node scripts/make-qr.mjs http://<ip-lan-laptop>:4173/tamu 12 "Nama Resto"
+```
+
+Menghasilkan `qr-stand.html` (layout A6 siap cetak — buka di browser, Ctrl+P, pilih A6 atau
+Save as PDF) dan `qr-stand.svg` (QR mentah). Jalankan ulang setiap kali IP laptop berubah,
+karena QR mengarah ke alamat LAN saat demo.
+

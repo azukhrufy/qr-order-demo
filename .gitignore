@@ -7,3 +7,10 @@ out
 *.log
 .DS_Store
 npm-debug.log*
+
+# hasil generator QR (dibuat ulang per demo)
+qr-stand.html
+qr-stand.svg
+qr-code.png
+qr-stand.pdf
+
