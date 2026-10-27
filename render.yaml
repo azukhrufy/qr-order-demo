@@ -3,6 +3,12 @@
 # (pages/api/*) dan state di memori proses (SSE + order). Static Site tidak menjalankan
 # server sama sekali, jadi semua endpoint POST akan mati.
 #
+# State di-flush ke file JSON (DATA_DIR/state.json) supaya order tidak hilang saat
+# proses restart. Catatan penting untuk plan free: filesystem Render EPHEMERAL —
+# data selamat dari restart proses, tapi HILANG saat redeploy / spin-down lama.
+# Untuk demo yang harus tahan redeploy: pasang Persistent Disk (plan berbayar) lalu
+# set DATA_DIR=/var/data, atau pindah ke Postgres/Redis.
+#
 # Jaga instance tetap 1 (jangan scale >1): state demo disimpan di memori proses.
 services:
   - type: web
@@ -17,3 +23,9 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 22.23.4
+      # Token meja (HMAC) — Render membuat nilai acak sekali; jangan diganti
+      # setelah QR dicetak, karena semua QR lama akan ditolak 403.
+      - key: QR_SECRET
+        generateValue: true
+      # - key: DATA_DIR
+      #   value: /var/data

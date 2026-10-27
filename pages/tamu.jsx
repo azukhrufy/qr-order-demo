@@ -38,17 +38,58 @@ export default function TamuPage() {
   const [note, setNote] = useState("");
   const [orderId, setOrderId] = useState(null);
   const [sending, setSending] = useState(false);
+  const [restored, setRestored] = useState(false);
+  const [blocked, setBlocked] = useState(null);
   const router = useRouter();
-  // Nomor meja diambil dari QR (?meja=12); fallback ke default di lib/menu.js
+  // Nomor meja + token diambil dari QR (?meja=12&t=xxxx); fallback ke lib/menu.js
   const table = router.query.meja ? String(router.query.meja) : menu?.table;
+  const token = router.query.t ? String(router.query.t) : "";
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
   const cartRef = useRef(cart);
 
+  // Keranjang + nomor order disimpan per meja di localStorage: HP terkunci,
+  // tab ketutup, atau refresh tidak menghapus pesanan yang sedang disusun.
+  const storageKey = table ? `qr_cart_${table}` : null;
+
   useEffect(() => {
     cartRef.current = cart;
   }, [cart]);
+
+  useEffect(() => {
+    if (!storageKey) return;
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      const saved = raw ? JSON.parse(raw) : null;
+      if (saved && typeof saved === "object") {
+        if (saved.cart && typeof saved.cart === "object") {
+          const clean = {};
+          Object.entries(saved.cart).forEach(([id, qty]) => {
+            const n = Number.parseInt(qty, 10);
+            if (Number.isFinite(n) && n > 0) clean[id] = Math.min(20, n);
+          });
+          setCart(clean);
+        }
+        if (typeof saved.note === "string") setNote(saved.note.slice(0, 240));
+        if (typeof saved.orderId === "string") setOrderId(saved.orderId);
+      }
+    } catch {
+      /* localStorage diblokir/penuh — lanjut tanpa restore */
+    }
+    setRestored(true);
+  }, [storageKey]);
+
+  useEffect(() => {
+    if (!restored || !storageKey) return;
+    try {
+      const empty = !Object.keys(cart).length && !note && !orderId;
+      if (empty) window.localStorage.removeItem(storageKey);
+      else window.localStorage.setItem(storageKey, JSON.stringify({ cart, note, orderId }));
+    } catch {
+      /* abaikan */
+    }
+  }, [restored, storageKey, cart, note, orderId]);
 
   useEffect(() => {
     fetch("/api/menu", { cache: "no-store" })
@@ -56,6 +97,17 @@ export default function TamuPage() {
       .then(setMenu)
       .catch(() => {});
   }, []);
+
+  // QR lama (tanpa token meja) berhenti di awal — jangan biarkan tamu menyusun
+  // pesanan yang pasti ditolak server.
+  useEffect(() => {
+    if (menu?.tokenRequired && !token) {
+      setBlocked({
+        title: "QR meja tidak valid",
+        body: "Halaman ini dibuka tanpa token meja. Scan ulang QR yang menempel di meja Anda."
+      });
+    }
+  }, [menu, token]);
 
   // Item di keranjang yang lalu ditandai habis oleh staf → buang + beri tahu.
   useEffect(() => {
@@ -116,6 +168,8 @@ export default function TamuPage() {
   }
 
   async function submit() {
+    if (blocked) return;
+
     const payload = Object.entries(cart).map(([id, qty]) => {
       const item = items.find((it) => it.id === id);
       return { id, name: item.name, qty, price: item.price };
@@ -128,13 +182,23 @@ export default function TamuPage() {
     setSending(true);
     const { ok, status, data } = await postJSON("/api/order", {
       table,
+      token,
       items: payload,
       note
     });
     setSending(false);
 
-    // 409 = item ditandai habis di antara waktu menu dibuka dan waktu submit.
-    if (status === 409 && data?.items) {
+    // 403 = token meja tidak dikenali (QR lama / nomor meja diketik manual).
+    if (status === 403) {
+      setBlocked({
+        title: "QR meja tidak valid",
+        body: data?.message || "Scan ulang QR yang menempel di meja Anda."
+      });
+      return;
+    }
+
+    // 409 ITEM_HABIS = item ditandai habis di antara waktu menu dibuka dan waktu submit.
+    if (status === 409 && data?.error === "ITEM_HABIS" && Array.isArray(data.items)) {
       setCart((prev) => {
         const next = { ...prev };
         data.items.forEach((name) => {
@@ -154,8 +218,43 @@ export default function TamuPage() {
       return;
     }
 
+    // 409 DUPLIKAT = tombol ter-tap dua kali / halaman dikirim ulang: sudah masuk, jangan dobel.
+    if (status === 409 && data?.error === "DUPLIKAT") {
+      if (data.orderId) setOrderId(data.orderId);
+      setCart({});
+      setNote("");
+      onClose();
+      toast({
+        title: "Pesanan sudah terkirim",
+        description: "Pesanan yang sama tidak dikirim dua kali.",
+        status: "info",
+        duration: 3200,
+        position: "bottom"
+      });
+      return;
+    }
+
+    // 429 = rate limit per meja / per jaringan.
+    if (status === 429) {
+      toast({
+        title: "Tunggu sebentar",
+        description: data?.message || "Pesanan terlalu sering dikirim dari meja ini.",
+        status: "warning",
+        duration: 5200,
+        isClosable: true,
+        position: "bottom"
+      });
+      return;
+    }
+
     if (!ok) {
-      toast({ title: "Pesanan gagal dikirim", status: "error", duration: 3000, position: "bottom" });
+      toast({
+        title: "Pesanan gagal dikirim",
+        description: data?.message || "",
+        status: "error",
+        duration: 4000,
+        position: "bottom"
+      });
       return;
     }
 
@@ -166,7 +265,24 @@ export default function TamuPage() {
   }
 
   async function callWaiter(type) {
-    await postJSON("/api/call", { table, type });
+    const { status, data } = await postJSON("/api/call", { table, token, type });
+    if (status === 429) {
+      toast({
+        title: "Sudah dipanggil",
+        description: data?.message || "Permintaan sebelumnya masih diproses.",
+        status: "info",
+        duration: 3600,
+        position: "bottom"
+      });
+      return;
+    }
+    if (status === 403) {
+      setBlocked({
+        title: "QR meja tidak valid",
+        body: data?.message || "Scan ulang QR yang menempel di meja Anda."
+      });
+      return;
+    }
     toast({
       title: type === "bill" ? "Permintaan bill dikirim" : "Panggilan pelayan dikirim",
       description: "Staf akan menghampiri meja Anda.",
@@ -182,6 +298,38 @@ export default function TamuPage() {
       <Flex minH="100vh" align="center" justify="center">
         <Text color="ink.500">Memuat menu…</Text>
       </Flex>
+    );
+  }
+
+  if (blocked) {
+    return (
+      <>
+        <Head>
+          <title>QR meja tidak valid</title>
+        </Head>
+        <Flex minH="100vh" bg="surface.900" align="center" justify="center" px={5}>
+          <Box
+            maxW="420px"
+            textAlign="center"
+            bg="surface.800"
+            borderWidth="1px"
+            borderColor="#4a2f2b"
+            borderRadius="18px"
+            p={6}
+          >
+            <Icon as={FiAlertTriangle} boxSize={9} color="danger.400" mb={3} />
+            <Text fontWeight={800} fontSize="lg" mb={2}>
+              {blocked.title}
+            </Text>
+            <Text fontSize="sm" color="ink.500" lineHeight={1.6}>
+              {blocked.body}
+            </Text>
+            <Text fontSize="xs" color="ink.500" mt={4}>
+              Meja {table || "-"}
+            </Text>
+          </Box>
+        </Flex>
+      </>
     );
   }
 

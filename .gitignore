@@ -8,6 +8,9 @@ out
 .DS_Store
 npm-debug.log*
 
+# state demo yang di-flush ke disk (order, item habis, panggilan)
+.data/
+
 # hasil generator QR (dibuat ulang per demo)
 qr-stand.html
 qr-stand.svg

@@ -12,7 +12,8 @@
     "build": "next build",
     "start": "next start -p ${PORT:-4173}",
     "lint": "next lint",
-    "qr": "node scripts/make-qr.mjs"
+    "qr": "node scripts/make-qr.mjs",
+    "probe": "node scripts/probe-guards.mjs"
   },
   "dependencies": {
     "@chakra-ui/react": "^2.10.10",

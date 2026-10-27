@@ -13,6 +13,7 @@
  */
 import { writeFile } from "node:fs/promises";
 import QRCode from "qrcode";
+import { normalizeTable, tableToken, TOKEN_REQUIRED } from "../lib/meja.js";
 
 const [, , urlArg, tableArg = "12", restoArg = "Resto Demo"] = process.argv;
 
@@ -21,10 +22,20 @@ if (!urlArg) {
   process.exit(1);
 }
 
+/**
+ * QR wajib memuat nomor meja DAN token meja: tanpa token, /api/order menolak
+ * dengan 403. Token = HMAC(secret, meja) — sama dengan yang dipakai server,
+ * jadi QR offline ini tetap valid.
+ */
+const meja = normalizeTable(tableArg);
+let target = String(urlArg).trim();
+if (!/[?&]meja=/.test(target)) target += `${target.includes("?") ? "&" : "?"}meja=${encodeURIComponent(meja)}`;
+if (TOKEN_REQUIRED && !/[?&]t=/.test(target)) target += `&t=${tableToken(meja)}`;
+
 const esc = (s) =>
   String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-const qr = await QRCode.toString(urlArg, {
+const qr = await QRCode.toString(target, {
   type: "svg",
   margin: 0,
   errorCorrectionLevel: "M",
@@ -98,13 +109,13 @@ await writeFile("qr-stand.html", html, "utf8");
 await writeFile("qr-stand.svg", qrInner, "utf8");
 
 // PNG siap tempel/screenshot (latar putih, margin 1 modul)
-await QRCode.toFile("qr-stand.png", urlArg, {
+await QRCode.toFile("qr-stand.png", target, {
   width: 900,
   margin: 1,
   errorCorrectionLevel: "M",
   color: { dark: "#12100e", light: "#ffffff" }
 });
 
-console.log(`qr-stand.html dibuat untuk: ${urlArg} (meja ${tableArg})`);
+console.log(`qr-stand.html dibuat untuk: ${target} (meja ${meja})`);
 console.log("Buka di browser → Ctrl+P → ukuran kertas A6 (atau Save as PDF).");
 console.log("Versi gambar: qr-stand.png (900px) dan qr-stand.svg.");

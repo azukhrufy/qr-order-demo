@@ -118,8 +118,8 @@ export default function QrPage() {
           </Flex>
 
           <Text fontSize="xs" color="ink.500" mt={4} className="no-print">
-            QR mengarah ke <code>{`/tamu?meja=${meja}`}</code> pada domain ini — jadi bisa dipakai
-            untuk berapa pun meja, dan tetap valid setelah aplikasi dipindah domain.
+            QR mengarah ke <code>{`/tamu?meja=${meja}&t=…`}</code> pada domain ini — token
+            meja ikut di dalam QR, jadi nomor meja tidak bisa ditebak orang luar.
           </Text>
         </Box>
       </Box>
