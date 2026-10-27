@@ -141,6 +141,13 @@ let firstOrderId = null;
     Boolean(data?.persistence?.writable && data?.persistence?.file && data?.persistence?.lastSavedAt),
     `${data?.persistence?.file} lastSaved ${data?.persistence?.lastSavedAt || "-"}`
   );
+
+  // Secret dari fallback = token bisa diforge siapa pun yang membaca repo.
+  record(
+    "QR_SECRET berasal dari environment (bukan fallback repo)",
+    data?.secretSource === "env",
+    `secretSource ${data?.secretSource || "-"}`
+  );
 }
 
 const failed = results.filter((r) => !r.pass);
