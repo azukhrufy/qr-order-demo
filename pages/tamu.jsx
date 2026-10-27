@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
+import { useRouter } from "next/router";
 import {
   Box,
   Button,
@@ -37,6 +38,9 @@ export default function TamuPage() {
   const [note, setNote] = useState("");
   const [orderId, setOrderId] = useState(null);
   const [sending, setSending] = useState(false);
+  const router = useRouter();
+  // Nomor meja diambil dari QR (?meja=12); fallback ke default di lib/menu.js
+  const table = router.query.meja ? String(router.query.meja) : menu?.table;
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const toast = useToast();
@@ -123,7 +127,7 @@ export default function TamuPage() {
 
     setSending(true);
     const { ok, status, data } = await postJSON("/api/order", {
-      table: menu.table,
+      table,
       items: payload,
       note
     });
@@ -162,7 +166,7 @@ export default function TamuPage() {
   }
 
   async function callWaiter(type) {
-    await postJSON("/api/call", { table: menu?.table, type });
+    await postJSON("/api/call", { table, type });
     toast({
       title: type === "bill" ? "Permintaan bill dikirim" : "Panggilan pelayan dikirim",
       description: "Staf akan menghampiri meja Anda.",
@@ -227,7 +231,7 @@ export default function TamuPage() {
           </Box>
           <Box ml="auto" bg="surface.700" borderWidth="1px" borderColor="surface.600" borderRadius="full" px={3} py={1}>
             <Text fontSize="xs" fontWeight={700} color="brand.400">
-              Meja {menu.table}
+              Meja {table}
             </Text>
           </Box>
         </Flex>
@@ -498,7 +502,7 @@ export default function TamuPage() {
       <Drawer isOpen={isOpen} placement="bottom" onClose={onClose} size="md">
         <DrawerOverlay />
         <DrawerContent bg="surface.800" borderTopRadius="20px" borderTopWidth="1px" borderColor="surface.600">
-          <DrawerHeader fontSize="md">Pesanan meja {menu.table}</DrawerHeader>
+          <DrawerHeader fontSize="md">Pesanan meja {table}</DrawerHeader>
           <DrawerBody>
             {Object.entries(cart).length === 0 ? (
               <Text fontSize="sm" color="ink.500">
@@ -596,7 +600,7 @@ export default function TamuPage() {
             {order?.status === "ditolak" ? "Pesanan ditolak staf" : "Pesanan terkirim!"}
           </Text>
           <Text fontSize="sm" color="ink.500" textAlign="center">
-            Meja {menu.table} · {rupiah(order?.total || 0)}
+            Meja {table} · {rupiah(order?.total || 0)}
           </Text>
 
           <Stack spacing={0} mt={2}>

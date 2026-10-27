@@ -101,11 +101,20 @@ kode lain.
 
 ## Prop QR untuk demo di lokasi
 
+Ada dua cara:
+
+**1. Dari browser (tanpa shell) — paling praktis.** Buka `/qr` pada aplikasi yang sudah
+deploy (mis. `https://qr-order-demo.onrender.com/qr`), isi nama resto + nomor meja, lalu tekan
+**Cetak / Simpan PDF** (layout A6) atau **Unduh PNG**. QR mengarah ke `/tamu?meja=<nomor>`,
+jadi tiap meja punya QR sendiri dan tetap valid walau domain berubah.
+
+**2. Dari terminal.**
+
 ```bash
-yarn qr http://<ip-lan-laptop>:4173/tamu 12 "Nama Resto"
+yarn qr https://qr-order-demo.onrender.com/tamu 12 "Nama Resto"
 ```
 
-Menghasilkan `qr-stand.html` (layout A6 siap cetak — buka di browser, Ctrl+P, pilih A6 atau
-Save as PDF) dan `qr-stand.svg` (QR mentah). Jalankan ulang setiap kali IP laptop berubah,
-karena QR mengarah ke alamat LAN saat demo.
+Menghasilkan `qr-stand.html` (A6 siap cetak — buka di browser, Ctrl+P), `qr-stand.svg`, dan
+`qr-stand.png` (900 px). Ketiganya ditulis di folder kerja repo dan di-gitignore.
+
 

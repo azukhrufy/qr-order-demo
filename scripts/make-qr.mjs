@@ -96,5 +96,15 @@ const html = `<!doctype html>
 
 await writeFile("qr-stand.html", html, "utf8");
 await writeFile("qr-stand.svg", qrInner, "utf8");
+
+// PNG siap tempel/screenshot (latar putih, margin 1 modul)
+await QRCode.toFile("qr-stand.png", urlArg, {
+  width: 900,
+  margin: 1,
+  errorCorrectionLevel: "M",
+  color: { dark: "#12100e", light: "#ffffff" }
+});
+
 console.log(`qr-stand.html dibuat untuk: ${urlArg} (meja ${tableArg})`);
 console.log("Buka di browser → Ctrl+P → ukuran kertas A6 (atau Save as PDF).");
+console.log("Versi gambar: qr-stand.png (900px) dan qr-stand.svg.");
