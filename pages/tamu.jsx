@@ -23,7 +23,7 @@ import {
   useDisclosure,
   useToast
 } from "@chakra-ui/react";
-import { FiBell, FiChevronLeft, FiFileText, FiMinus, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FiAlertTriangle, FiBell, FiChevronLeft, FiFileText, FiMinus, FiPlus, FiTrash2 } from "react-icons/fi";
 import { useLive, rupiah, postJSON } from "@/lib/client";
 
 export default function TamuPage() {
@@ -280,12 +280,12 @@ export default function TamuPage() {
                   key={it.id}
                   bg="surface.800"
                   borderWidth="1px"
-                  borderColor="surface.600"
+                  borderColor={off ? "#4a2f2b" : "surface.600"}
                   borderRadius="16px"
                   overflow="hidden"
                   display="flex"
                   flexDirection="column"
-                  opacity={off ? 0.55 : 1}
+                  position="relative"
                 >
                   <Box w="full" aspectRatio="4 / 3" position="relative" bg="surface.700" overflow="hidden">
                     <Box
@@ -297,7 +297,36 @@ export default function TamuPage() {
                       w="full"
                       h="full"
                       objectFit="cover"
+                      filter={off ? "grayscale(1)" : "none"}
+                      opacity={off ? 0.6 : 1}
+                      transition="filter .25s ease, opacity .25s ease"
                     />
+                    {off ? (
+                      <Flex
+                        position="absolute"
+                        inset={0}
+                        align="center"
+                        justify="center"
+                        bg="blackAlpha.500"
+                        pointerEvents="none"
+                      >
+                        <HStack
+                          bg="danger.500"
+                          color="white"
+                          px={2.5}
+                          py={1}
+                          borderRadius="6px"
+                          spacing={1}
+                          boxShadow="md"
+                        >
+                          <Icon as={FiAlertTriangle} boxSize={3.5} />
+                          <Text fontSize="2xs" fontWeight={800} letterSpacing="wider">
+                            HABIS
+                          </Text>
+                        </HStack>
+                      </Flex>
+                    ) : null}
+
                     {it.imageCredit ? (
                       <Link
                         href={it.imageSource}
@@ -328,24 +357,32 @@ export default function TamuPage() {
                     <Text fontSize="xs" color="ink.500" lineHeight="short" noOfLines={2} minH="2.5em" mt={1}>
                       {it.desc}
                     </Text>
-                    <Text fontSize="sm" fontWeight={700} color="brand.400" mt={2}>
+                    <Text
+                      fontSize="sm"
+                      fontWeight={700}
+                      color={off ? "ink.500" : "brand.400"}
+                      textDecoration={off ? "line-through" : "none"}
+                      mt={2}
+                    >
                       {rupiah(it.price)}
                     </Text>
 
                     <Box mt="auto" pt={3}>
                       {off ? (
-                        <Text
-                          textAlign="center"
-                          fontSize="xs"
-                          fontWeight={800}
-                          color="danger.400"
+                        <Button
+                          w="full"
+                          size="sm"
+                          isDisabled
+                          leftIcon={<FiAlertTriangle />}
+                          bg="surface.700"
+                          color="ink.500"
                           borderWidth="1px"
-                          borderColor="danger.400"
-                          borderRadius="6px"
-                          py={2}
+                          borderColor="surface.600"
+                          _disabled={{ opacity: 1, cursor: "not-allowed" }}
+                          aria-label={`${it.name} sedang habis`}
                         >
-                          HABIS
-                        </Text>
+                          Habis
+                        </Button>
                       ) : quantity === 0 ? (
                         <Button
                           w="full"

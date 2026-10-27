@@ -417,8 +417,8 @@ export default function StafPage() {
               <Stack spacing={2.5}>
                 <Box bg="staff.800" borderWidth="1px" borderColor="staff.600" borderStyle="dashed" borderRadius="11px" px={3} py={2.5}>
                   <Text fontSize="xs" color="staff.500">
-                    Tap <b>Habis</b> — item langsung hilang dari menu tamu dalam hitungan detik. Tamu yang
-                    sudah memasukkannya ke keranjang akan ditolak saat mengirim pesanan.
+                    Tap <b>Habis</b> — kartu menu di halaman tamu langsung jadi hitam-putih dan tombol
+                    pesannya nonaktif. Pesanan yang terlanjur dikirim tetap ditolak di server.
                   </Text>
                 </Box>
 
@@ -426,33 +426,65 @@ export default function StafPage() {
                   {items.map((it) => {
                     const off = live.soldout.includes(it.id);
                     return (
-                      <Box
+                      <Flex
                         key={it.id}
                         bg={off ? "#221716" : "staff.800"}
                         borderWidth="1px"
                         borderColor={off ? "#6b2f29" : "staff.600"}
                         borderRadius="12px"
                         p={2.5}
+                        gap={2.5}
                       >
-                        <Text fontSize="sm" fontWeight={650} color={off ? "#ffb4ad" : "ink.50"}>
-                          {it.emoji} {it.name}
-                        </Text>
-                        <Text fontSize="xs" color="staff.500" mb={2}>
-                          {rupiah(it.price)} · {it.cat}
-                        </Text>
-                        <Button
-                          size="sm"
-                          w="100%"
-                          onClick={() => toggleSoldout(it.id, !off)}
-                          bg={off ? "success.500" : "#3a1f1c"}
-                          color={off ? "#0c1a12" : "#ffb4ad"}
-                          borderWidth="1px"
-                          borderColor={off ? "success.500" : "#6b2f29"}
-                          _hover={{ bg: off ? "success.400" : "#4a2723" }}
+                        <Box
+                          w="52px"
+                          h="52px"
+                          flexShrink={0}
+                          borderRadius="9px"
+                          overflow="hidden"
+                          bg="staff.700"
+                          display="grid"
+                          placeItems="center"
                         >
-                          {off ? "Tersedia lagi" : "Habis"}
-                        </Button>
-                      </Box>
+                          {it.image ? (
+                            <Box
+                              as="img"
+                              src={it.image}
+                              alt={it.name}
+                              loading="lazy"
+                              decoding="async"
+                              w="full"
+                              h="full"
+                              objectFit="cover"
+                              filter={off ? "grayscale(1)" : "none"}
+                              opacity={off ? 0.5 : 1}
+                              transition="filter .25s ease, opacity .25s ease"
+                            />
+                          ) : (
+                            <Text fontSize="lg">{it.emoji}</Text>
+                          )}
+                        </Box>
+
+                        <Box minW={0} flex={1}>
+                          <Text fontSize="sm" fontWeight={650} color={off ? "#ffb4ad" : "ink.50"} noOfLines={2}>
+                            {it.name}
+                          </Text>
+                          <Text fontSize="xs" color="staff.500" mb={2}>
+                            {rupiah(it.price)} · {it.cat}
+                          </Text>
+                          <Button
+                            size="sm"
+                            w="100%"
+                            onClick={() => toggleSoldout(it.id, !off)}
+                            bg={off ? "success.500" : "#3a1f1c"}
+                            color={off ? "#0c1a12" : "#ffb4ad"}
+                            borderWidth="1px"
+                            borderColor={off ? "success.500" : "#6b2f29"}
+                            _hover={{ bg: off ? "success.400" : "#4a2723" }}
+                          >
+                            {off ? "Tersedia lagi" : "Habis"}
+                          </Button>
+                        </Box>
+                      </Flex>
                     );
                   })}
                 </SimpleGrid>
