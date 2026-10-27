@@ -11,9 +11,13 @@ Demo untuk menunjukkan alur inti sistem pesanan dari meja restoran.
 
 ## Menjalankan
 
+Prasyarat: **Node 22 (LTS "Jod")** dan **Yarn 1.22.x** — lihat `.nvmrc` dan field `engines` di
+`package.json`.
+
 ```bash
-npm install --registry=https://registry.npmjs.org/
-npm run dev
+nvm use            # memakai Node 22 sesuai .nvmrc
+yarn install --frozen-lockfile
+yarn dev
 ```
 
 Buka:
@@ -22,11 +26,13 @@ Buka:
 - `http://localhost:4173/tamu` — halaman tamu (yang di-scan lewat QR)
 - `http://localhost:4173/staf` — layar staf (pesanan & ketersediaan)
 
-Untuk demo di lokasi: jalankan `npm run dev` di laptop, lalu buka `/tamu` dan `/staf` dari HP
+Untuk demo di lokasi: jalankan `yarn dev` di laptop, lalu buka `/tamu` dan `/staf` dari HP
 yang berada di jaringan/hotspot yang sama, memakai IP LAN laptop.
 
-> Catatan install: `--registry=https://registry.npmjs.org/` wajib dipakai di mesin ini, karena
-> mirror npm default (Tencent) tidak bisa dipakai.
+> Catatan: dependency dikelola **yarn** (`yarn.lock` di-commit). `.yarnrc` sudah mengunci
+> registry ke `registry.yarnpkg.com` supaya tidak mengambil mirror npm default mesin
+> (`mirrors.tencentyun.com`) yang tidak bisa dipakai.
+
 
 ## Stack
 
@@ -74,7 +80,7 @@ kode lain.
 ## Prop QR untuk demo di lokasi
 
 ```bash
-node scripts/make-qr.mjs http://<ip-lan-laptop>:4173/tamu 12 "Nama Resto"
+yarn qr http://<ip-lan-laptop>:4173/tamu 12 "Nama Resto"
 ```
 
 Menghasilkan `qr-stand.html` (layout A6 siap cetak — buka di browser, Ctrl+P, pilih A6 atau
