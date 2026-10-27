@@ -8,9 +8,9 @@
     "yarn": ">=1.22"
   },
   "scripts": {
-    "dev": "next dev -p 4173",
+    "dev": "next dev -p ${PORT:-4173}",
     "build": "next build",
-    "start": "next start -p 4173",
+    "start": "next start -p ${PORT:-4173}",
     "lint": "next lint",
     "qr": "node scripts/make-qr.mjs"
   },

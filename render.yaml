@@ -1,0 +1,19 @@
+# Blueprint Render — demo QR order.
+# PENTING: pakai Web Service, BUKAN Static Site, karena aplikasi ini punya API routes
+# (pages/api/*) dan state di memori proses (SSE + order). Static Site tidak menjalankan
+# server sama sekali, jadi semua endpoint POST akan mati.
+#
+# Jaga instance tetap 1 (jangan scale >1): state demo disimpan di memori proses.
+services:
+  - type: web
+    name: qr-order-demo
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: yarn install --frozen-lockfile && yarn build
+    startCommand: yarn start
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 22.23.4

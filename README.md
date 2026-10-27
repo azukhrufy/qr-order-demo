@@ -67,6 +67,28 @@ lib/
   theme.js             tema Chakra (warna, font, style global)
 ```
 
+## Deploy
+
+Aplikasi ini **butuh proses Node yang hidup** (API routes + state di memori + SSE). Bukan
+kandidat static export.
+
+**Render — Web Service (bukan Static Site).** Repo sudah menyertakan `render.yaml`; tinggal
+New → Blueprint, atau manual dengan:
+
+- Environment: **Node**
+- Build: `yarn install --frozen-lockfile && yarn build`
+- Start: `yarn start` (script membaca `$PORT` dari platform)
+- `NODE_VERSION=22.23.4` (juga ada di `.node-version`)
+
+Catatan Render: free tier tidur setelah ~15 menit idle (permintaan pertama setelah tidur
+lambat ±30 detik) dan **state demo hilang saat proses restart/redeploy**. Jangan naikkan
+jumlah instance — state tidak dibagi antar instance.
+
+**Vercel — belum siap apa adanya.** Vercel menjalankan API route sebagai serverless function,
+jadi `lib/store.js` (memori proses) tidak dibagi antar instance: pada uji 8 order paralel,
+hanya 2 yang tersimpan. Untuk Vercel, state harus pindah ke Upstash Redis / database dan SSE
+diganti polling.
+
 ## Batas demo (belum termasuk)
 
 Belum ada login/role, database, printer thermal, pajak PB1/service charge, multi-meja sekaligus,
