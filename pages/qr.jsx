@@ -10,7 +10,7 @@ import { FiPrinter, FiRefreshCw } from "react-icons/fi";
  */
 export default function QrPage() {
   const [meja, setMeja] = useState("12");
-  const [resto, setResto] = useState("Cafe D'Pakar");
+  const [resto, setResto] = useState("Cafe Demo");
   const [nonce, setNonce] = useState(0);
 
   const src = `/api/qr?meja=${encodeURIComponent(meja)}&v=${nonce}`;
