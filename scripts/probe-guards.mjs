@@ -15,7 +15,23 @@ import { tableToken } from "../lib/meja.js";
 
 const base = (process.argv[2] || "http://localhost:4173").replace(/\/$/, "");
 const table = process.argv[3] || "99";
-const token = process.argv[4] || tableToken(table);
+
+/**
+ * Token diambil dari /api/qr?format=json supaya probe tetap benar di server
+ * yang QR_SECRET-nya tidak kita pegang (mis. Render). Fallback: hitung lokal.
+ */
+async function tokenFor(meja) {
+  try {
+    const res = await fetch(`${base}/api/qr?meja=${encodeURIComponent(meja)}&format=json`, { cache: "no-store" });
+    const data = await res.json();
+    if (data?.token) return data.token;
+  } catch {
+    /* jatuh ke perhitungan lokal */
+  }
+  return tableToken(meja);
+}
+
+const token = process.argv[4] || (await tokenFor(table));
 
 const results = [];
 function record(name, pass, detail) {
@@ -77,19 +93,19 @@ let firstOrderId = null;
 
 // 5) Qty di atas batas → 413 (pakai meja lain supaya tidak kena rate limit)
 {
-  const r = await post("/api/order", { table: `${table}b`, token: tableToken(`${table}b`), items: oneItem("kopi-susu", 999) });
+  const r = await post("/api/order", { table: `${table}b`, token: await tokenFor(`${table}b`), items: oneItem("kopi-susu", 999) });
   record("qty 999 ditolak 413", r.status === 413, `status ${r.status} ${r.data?.error || ""}`);
 }
 
 // 6) Item tidak ada di menu → 400
 {
-  const r = await post("/api/order", { table: `${table}c`, token: tableToken(`${table}c`), items: oneItem("menu-karangan") });
+  const r = await post("/api/order", { table: `${table}c`, token: await tokenFor(`${table}c`), items: oneItem("menu-karangan") });
   record("item karangan ditolak 400", r.status === 400, `status ${r.status} ${r.data?.error || ""}`);
 }
 
 // 7) Harga dari klien diabaikan (kirim price 1 untuk menu Rp35.000)
 {
-  const r = await post("/api/order", { table: `${table}d`, token: tableToken(`${table}d`), items: oneItem("nasi-goreng-dpakar", 1, 1) });
+  const r = await post("/api/order", { table: `${table}d`, token: await tokenFor(`${table}d`), items: oneItem("nasi-goreng-dpakar", 1, 1) });
   const total = r.data?.total;
   record("harga klien diabaikan server", r.status === 201 && total > 1, `total ${total}`);
 }
@@ -97,7 +113,7 @@ let firstOrderId = null;
 // 8) Panggil pelayan dua kali → 429
 {
   const t = `${table}e`;
-  const tk = tableToken(t);
+  const tk = await tokenFor(t);
   const a = await post("/api/call", { table: t, token: tk, type: "pelayan" });
   const b = await post("/api/call", { table: t, token: tk, type: "pelayan" });
   record("panggil pelayan dua kali ditolak 429", a.status === 201 && b.status === 429, `${a.status} lalu ${b.status}`);
