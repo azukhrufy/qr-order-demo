@@ -15,6 +15,7 @@ import {
   Icon,
   IconButton,
   Input,
+  Link,
   SimpleGrid,
   Stack,
   Text,
@@ -286,17 +287,39 @@ export default function TamuPage() {
                   flexDirection="column"
                   opacity={off ? 0.55 : 1}
                 >
-                  <Flex
-                    w="full"
-                    aspectRatio="4 / 3"
-                    bg="linear-gradient(140deg, #2d2519, #3d3223)"
-                    align="center"
-                    justify="center"
-                    fontSize="48px"
-                    aria-hidden="true"
-                  >
-                    {it.emoji || "🍽️"}
-                  </Flex>
+                  <Box w="full" aspectRatio="4 / 3" position="relative" bg="surface.700" overflow="hidden">
+                    <Box
+                      as="img"
+                      src={it.image}
+                      alt={it.name}
+                      loading="lazy"
+                      decoding="async"
+                      w="full"
+                      h="full"
+                      objectFit="cover"
+                    />
+                    {it.imageCredit ? (
+                      <Link
+                        href={it.imageSource}
+                        isExternal
+                        position="absolute"
+                        left={2}
+                        bottom={2}
+                        maxW="calc(100% - 16px)"
+                        px={1.5}
+                        py={0.5}
+                        bg="blackAlpha.800"
+                        color="white"
+                        borderRadius="4px"
+                        fontSize="9px"
+                        lineHeight="short"
+                        noOfLines={1}
+                        _hover={{ color: "white", textDecoration: "underline" }}
+                      >
+                        {it.imageCredit}
+                      </Link>
+                    ) : null}
+                  </Box>
 
                   <Flex p={3} flex={1} flexDirection="column" align="stretch">
                     <Text fontSize="sm" fontWeight={700} lineHeight="short" noOfLines={2} minH="2.5em">
